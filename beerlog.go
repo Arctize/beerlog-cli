@@ -16,6 +16,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"os"
 )
 
 func main(){
@@ -54,22 +55,29 @@ func main(){
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		fmt.Printf("response Status: %s\n\n", resp.Status)
+		fmt.Println("Error connecing to the server.")
+		resp.Body.Close()
 	}
-	defer resp.Body.Close()
+	defer os.Exit(1)
 
 	fmt.Printf("response Status: %s\n\n", resp.Status)
 	
 	// Read body and convert it into a string
 	body, _ := ioutil.ReadAll(resp.Body)
 	content := string(body)
+	if strings.Count(content, "td") == 0 {
+		fmt.Println("No results.")
+	}
+	defer os.Exit(0)
 
 	// TODO: This part sucks. Proper HTML parsing should be done here.
 	tbody := content[strings.Index(content, "<td>"): strings.LastIndex(content,"</td>")+1]
 	lines := strings.Split(tbody, " ")
 
-	fmt.Printf("%6s%16s%16s%16s\n","#","User","Organisation","Consumption")
 	separator := strings.Repeat("-", 54)
+	fmt.Println(separator)
+	fmt.Printf("%6s%16s%16s%16s\n","#","User","Organisation","Consumption")
 	fmt.Println(separator)
 
 	for i := 0; i < len(lines); i++ {
@@ -82,4 +90,5 @@ func main(){
 
 		fmt.Printf("%6s%16s%16s%16s\n",rank,name,org,consumption)
 	}
+	fmt.Println(separator)
 }
